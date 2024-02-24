@@ -14,14 +14,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = __importDefault(require("dotenv"));
 const axios_1 = __importDefault(require("axios"));
+const asana_1 = require("asana");
 dotenv_1.default.config();
-const { GITHUB_TOKEN, GITHUB_USERNAME, GITHUB_REPO, TRELLO_KEY, TRELLO_TOKEN, TRELLO_LIST_ID, } = process.env;
+const { GITHUB_TOKEN, GITHUB_USERNAME, GITHUB_REPO, ASANA_ACCESS_TOKEN, ASANA_PROJECT_ID, ASANA_WORKSPACE_ID, } = process.env;
 const fetchGitHubIssues = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const response = yield axios_1.default.get(`https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/issues`, {
-            headers: {
-                Authorization: `token ${GITHUB_TOKEN}`,
-            },
+            headers: { Authorization: `Bearer ${GITHUB_TOKEN}` },
         });
         return response.data;
     }
@@ -30,23 +29,25 @@ const fetchGitHubIssues = () => __awaiter(void 0, void 0, void 0, function* () {
         return [];
     }
 });
-const createTrelloCard = (issue) => __awaiter(void 0, void 0, void 0, function* () {
+const createAsanaTask = (issue) => __awaiter(void 0, void 0, void 0, function* () {
+    const client = asana_1.Client.create().useAccessToken(ASANA_ACCESS_TOKEN); // Assert non-null with "!"
     try {
-        yield axios_1.default.post("https://api.trello.com/1/cards", {
+        yield client.tasks.create({
             name: issue.title,
-            desc: `${issue.body}\n\n${issue.html_url}`,
-            idList: TRELLO_LIST_ID,
-            key: TRELLO_KEY,
-            token: TRELLO_TOKEN,
+            notes: `${issue.body}\n\n${issue.html_url}`,
+            projects: [ASANA_PROJECT_ID], // Assert non-null with "!"
+            workspace: ASANA_WORKSPACE_ID, // Include workspace ID
         });
-        console.log(`Card created for issue: ${issue.title}`);
+        console.log(`Task created for issue: ${issue.title}`);
     }
     catch (error) {
-        console.error("Error creating Trello card:", error);
+        console.error("Error creating Asana task:", error);
     }
 });
-const syncIssuesToTrello = () => __awaiter(void 0, void 0, void 0, function* () {
+const syncIssuesToAsana = () => __awaiter(void 0, void 0, void 0, function* () {
     const issues = yield fetchGitHubIssues();
-    issues.forEach((issue) => createTrelloCard(issue));
+    for (const issue of issues) {
+        yield createAsanaTask(issue);
+    }
 });
-syncIssuesToTrello();
+syncIssuesToAsana();
