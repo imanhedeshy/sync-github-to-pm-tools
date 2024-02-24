@@ -1,0 +1,31 @@
+{
+  "dependencies": {
+    "asana": "^3.0.2",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.5"
+  },
+  "name": "sync-github-to-pm-tools",
+  "version": "1.0.0",
+  "description": "An application to synchronize GitHub issues with project management tools",
+  "main": "app.ts",
+  "devDependencies": {
+    "@types/asana": "^0.18.16",
+    "@types/axios": "^0.14.0",
+    "@types/dotenv": "^8.2.0",
+    "@types/node": "^20.11.20",
+    "typescript": "^5.3.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imanhedeshy/sync-github-to-pm-tools.git"
+  },
+  "author": "Iman",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/imanhedeshy/sync-github-to-pm-tools/issues"
+  },
+  "homepage": "https://github.com/imanhedeshy/sync-github-to-pm-tools#readme"
+}
