@@ -7,7 +7,7 @@
   "name": "sync-github-to-pm-tools",
   "version": "1.0.0",
   "description": "An application to synchronize GitHub issues with project management tools",
-  "main": "app.ts",
+  "main": "app.js",
   "devDependencies": {
     "@types/asana": "^0.18.16",
     "@types/axios": "^0.14.0",
