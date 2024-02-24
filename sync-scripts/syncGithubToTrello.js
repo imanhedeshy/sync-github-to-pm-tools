@@ -12,41 +12,31 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const dotenv_1 = __importDefault(require("dotenv"));
+exports.syncToTrello = void 0;
 const axios_1 = __importDefault(require("axios"));
-dotenv_1.default.config();
-const { GITHUB_TOKEN, GITHUB_USERNAME, GITHUB_REPO, TRELLO_KEY, TRELLO_TOKEN, TRELLO_LIST_ID, } = process.env;
-const fetchGitHubIssues = () => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const response = yield axios_1.default.get(`https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/issues`, {
-            headers: {
-                Authorization: `token ${GITHUB_TOKEN}`,
-            },
-        });
-        return response.data;
-    }
-    catch (error) {
-        console.error("Error fetching GitHub issues:", error);
-        return [];
-    }
-});
+const utils_1 = require("../utils/utils");
+const { TRELLO_KEY, TRELLO_TOKEN, TRELLO_LIST_ID } = process.env;
+if (!TRELLO_KEY || !TRELLO_TOKEN || !TRELLO_LIST_ID) {
+    throw new Error("Required Trello environment variables are not set.");
+}
 const createTrelloCard = (issue) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        yield axios_1.default.post("https://api.trello.com/1/cards", {
+        const response = yield axios_1.default.post("https://api.trello.com/1/cards", {
             name: issue.title,
             desc: `${issue.body}\n\n${issue.html_url}`,
             idList: TRELLO_LIST_ID,
             key: TRELLO_KEY,
             token: TRELLO_TOKEN,
         });
-        console.log(`Card created for issue: ${issue.title}`);
+        console.log(`Card created for issue: ${issue.title}, card id: ${response.data.id}`);
     }
     catch (error) {
         console.error("Error creating Trello card:", error);
     }
 });
-const syncIssuesToTrello = () => __awaiter(void 0, void 0, void 0, function* () {
-    const issues = yield fetchGitHubIssues();
-    issues.forEach((issue) => createTrelloCard(issue));
+const syncToTrello = (repoAddress, githubToken) => __awaiter(void 0, void 0, void 0, function* () {
+    const [username, repo] = repoAddress.split("/");
+    const issues = yield (0, utils_1.fetchGitHubIssues)(username, repo, githubToken);
+    yield Promise.all(issues.map((issue) => createTrelloCard(issue)));
 });
-syncIssuesToTrello();
+exports.syncToTrello = syncToTrello;

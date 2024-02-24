@@ -12,17 +12,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// Import necessary modules
+exports.syncToJira = void 0;
 const axios_1 = __importDefault(require("axios"));
-const dotenv_1 = __importDefault(require("dotenv"));
-// Load environment variables
-dotenv_1.default.config();
-// Declare and assert environment variables
-const JIRA_HOST = process.env.JIRA_HOST;
-const JIRA_USER_EMAIL = process.env.JIRA_USER_EMAIL;
-const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN;
-const JIRA_PROJECT_KEY = process.env.JIRA_PROJECT_KEY;
-// Function to create a Jira issue
+const utils_1 = require("../utils/utils");
+const { JIRA_HOST, JIRA_USER_EMAIL, JIRA_API_TOKEN, JIRA_PROJECT_KEY } = process.env;
+if (!JIRA_HOST || !JIRA_USER_EMAIL || !JIRA_API_TOKEN || !JIRA_PROJECT_KEY) {
+    throw new Error("Required Jira environment variables are not set.");
+}
 const createJiraIssue = (issue) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const response = yield axios_1.default.post(`${JIRA_HOST}/rest/api/3/issue`, {
@@ -33,13 +29,13 @@ const createJiraIssue = (issue) => __awaiter(void 0, void 0, void 0, function* (
                 summary: issue.title,
                 description: `${issue.body}\n\nGitHub Issue: ${issue.html_url}`,
                 issuetype: {
-                    name: "Task", // Adjust as per your Jira issue type
+                    name: "Task", // Configure this according to your Jira setup
                 },
             },
         }, {
             auth: {
-                username: JIRA_USER_EMAIL, // Already asserted non-null above
-                password: JIRA_API_TOKEN, // Already asserted non-null above
+                username: JIRA_USER_EMAIL,
+                password: JIRA_API_TOKEN,
             },
             headers: {
                 Accept: "application/json",
@@ -52,10 +48,11 @@ const createJiraIssue = (issue) => __awaiter(void 0, void 0, void 0, function* (
         console.error("Error creating Jira issue:", error);
     }
 });
-// Example usage (ensure you replace this with actual logic to fetch GitHub issues)
-const exampleGitHubIssue = {
-    title: "Example Issue Title",
-    body: "This is a detailed description of the issue.",
-    html_url: "https://github.com/user/repo/issues/1",
-};
-createJiraIssue(exampleGitHubIssue);
+const syncToJira = (repoAddress, githubToken) => __awaiter(void 0, void 0, void 0, function* () {
+    const [username, repo] = repoAddress.split("/");
+    const issues = yield (0, utils_1.fetchGitHubIssues)(username, repo, githubToken);
+    for (const issue of issues) {
+        yield createJiraIssue(issue);
+    }
+});
+exports.syncToJira = syncToJira;
